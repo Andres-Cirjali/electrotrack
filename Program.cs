@@ -1,17 +1,77 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq.Expressions;
 
 namespace ElectroTrack
 {
-    class Program
-    {
-        static List<List<string>> consultasRealizadas = new List<List<string>>();
 
-        static void Main(string[] args)
+    // CLASE LOGGER
+
+    /// <summary>
+    ///  Simplemente creamos un archivo.log para poder ver todo lo que occurre en nuestro programa dependiendo de lo que hagamos, como debugging
+    /// </summary>
+    static class LOGGER
+    {
+        private static readonly string _rutaLog = "electrotrack.log";
+
+        /// <summary>
+        /// registramos un mensaje info en el log
+        /// </summary>
+        /// <param name="mensaje">evento q se registra </param>
+        public static void info(string mensaje)
         {
-            EjecutarPrograma();
+            string linea = $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] [INFO]  {mensaje}";
+            try
+            {
+                File.AppendAllText(_rutaLog, linea + Environment.NewLine);
+            }
+            catch (IOException ex)
+            {
+                Console.WriteLine($"[Advertencia] No se pudo escribir en el log: {ex.Message}");
+            }
         }
 
+        ///<summary>
+        ///registramos un mensaje de error en el log y lo dejamos ahi medio bonico en color rojo oscuro
+        ///</summary>
+        /// <param name="mensaje">Descripción del error producido.</param>
+        public static void Error(string mensaje)
+        {
+            string linea = $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] [ERROR] {mensaje}";
+            Console.ForegroundColor = ConsoleColor.DarkRed;
+            Console.WriteLine(linea);
+            Console.ResetColor();
+            try
+            {
+                File.AppendAllText(_rutaLog, linea + Environment.NewLine);
+            }
+            catch (IOException ex)
+            {
+                Console.WriteLine($"[Advertencia] No se pudo escribir el error en el log: {ex.Message}");
+            }
+        }
+    }
+
+    // clase principal
+   /// <summary>
+   /// donde sucede toda la magia es decir el menu y navegacion
+   /// </summary>
+    class Program
+    {
+        /// <summary>
+        /// almacena historial de consultas
+        /// </summary>
+        static List<List<string>> consultasRealizadas = new List<List<string>>();
+        // entrada del programa y logeamos eso
+        static void Main(string[] args)
+        {
+            LOGGER.info(" -- sesion inciada ");
+            EjecutarPrograma();
+            LOGGER.info(" -- sesion cerrada ");
+        }
+        /// <summary>
+        /// bucle del programa y menu
+        /// </summary>
         static void EjecutarPrograma()
         {
             bool salir = false;
@@ -39,7 +99,11 @@ namespace ElectroTrack
                         ConsultasRealizadas();
                         break;
                     case 6:
-                        Console.WriteLine("¡Gracias por usar ElectroTrack!");
+                       CalculadoraDHont();
+                        break;
+                    case 7:
+                      Console.WriteLine("¡Gracias por usar ElectroTrack!");
+                        LOGGER.info("El usuario eligió salir del programa.");
                         salir = true;
                         break;
                     default:
@@ -56,8 +120,14 @@ namespace ElectroTrack
 
         // CONTENIDO
 
+        /// <summary>
+        /// simplemente muestra muchisima informacón del sistema electoral y ley d'hont
+        /// </summary>
+
         static void LeyDHont()
         {
+            LOGGER.info("el usuario accedio a la seccion ley dhont");
+
             Console.WriteLine("\n╔════════════════════════════════════════════════════╗");
             Console.WriteLine("║              LA LEY D'HONDT                       ║");
             Console.WriteLine("╚════════════════════════════════════════════════════╝");
@@ -92,11 +162,19 @@ namespace ElectroTrack
             Console.WriteLine($"a si que tendria {ralphDividido}, para el segundo escaño mirariamos el siguiente que mas votos tiene la lista seria algo asi: 1ero con {ralphDividido}, segundo {votosDior}, 3ero {votosHugo} y 4to {votosDolce}.");
             Console.WriteLine("como el partido de dior es el siguiente con mas votos seleccionariamos ese, y asi sucesivamente, cada vez que un partido tenga el escaño se tendria que dividir el numero total de votos que tenia entre 1,2,3,4,5");
 
+            Console.WriteLine("\n  (Prueba la opcion 6 para calcular un reparto real con tus propios datos)");
+
             RegistrarConsulta("Ley D'Hondt");
         }
 
+        /// <summary>
+        /// mas informacion pero esta vez sobre partidos politicos
+        /// </summary>
         static void PartidosPoliticos()
         {
+
+            LOGGER.info("el usuario esta en la seccion de partidos politicos");
+
             Console.WriteLine("\n╔════════════════════════════════════════════════════╗");
             Console.WriteLine("║         PARTIDOS POLÍTICOS PRINCIPALES            ║");
             Console.WriteLine("╚════════════════════════════════════════════════════╝");
@@ -123,8 +201,13 @@ namespace ElectroTrack
             RegistrarConsulta("Partidos Políticos");
         }
 
+        /// <summary>
+        /// simplemente los resultados de las elecciones de 20234 y 2019
+        /// </summary>
         static void EleccionesPasadas()
         {
+            LOGGER.info("el usuareio llego a la seccion de elecciones pasadas");
+
             Console.WriteLine("\n╔════════════════════════════════════════════════════╗");
             Console.WriteLine("║        ELECCIONES GENERALES - RESULTADOS          ║");
             Console.WriteLine("╚════════════════════════════════════════════════════╝");
@@ -180,8 +263,14 @@ namespace ElectroTrack
             RegistrarConsulta("Elecciones Generales");
         }
 
+        /// <summary>
+        /// informacion de los casos de corrupcion 
+        /// </summary>
         static void CasosCorrupcion()
         {
+            // correcion logica: esta vez se registrar al entrar no al final como antes
+            RegistrarConsulta("Casos de corrupción");
+            LOGGER.info("El usuario accedio a maravillosa corrupcion que acecha a este pais :)");
             Console.WriteLine("\n╔════════════════════════════════════════════════════╗");
             Console.WriteLine("║         CASOS DE CORRUPCIÓN + extra            ║");
             Console.WriteLine("╚════════════════════════════════════════════════════╝");
@@ -212,19 +301,31 @@ namespace ElectroTrack
                 Console.WriteLine($"{i + 1}. {casos[i]}");
             }
             Console.WriteLine("0. Volver al menú principal");
-
+ 
             int opcion = entradausuarionum("\npresione la tecla 0 para salir: ");
 
-            if (opcion >= 1 && opcion <= casos.Length)
+      // CORRECCIÓN + TRY-CATCH: protegemos el acceso al array por índice
+            try
             {
-                RegistrarConsulta($"Corrupción: {casos[opcion - 1]}");
+                if (opcion >= 1 && opcion <= casos.Length)
+                {
+                    LOGGER.info($"El usuario seleccionó el caso: {casos[opcion - 1]}");
+                }
+                else if (opcion != 0)
+                {
+                    mostrarerror("Opción no válida.");
+                    LOGGER.Error($"Opción fuera de rango en CasosCorrupcion: {opcion}");
+                }
             }
-            else if (opcion != 0)
+            catch (IndexOutOfRangeException ex)
             {
-                mostrarerror("Opción no válida.");
+                LOGGER.Error($"Índice fuera de rango en CasosCorrupcion: opcion={opcion} — {ex.Message}");
+                mostrarerror("Error inesperado al acceder al dato seleccionado.");
             }
         }
-
+        /// <summary>
+        /// ultimo summary que voy a hacer porque ha este paso pongo 500 lo demas lo pongo con un comentario a secas por que terrible lo del xml documentation comments
+        /// </summary>
         static void ConsultasRealizadas()
         {
             Console.WriteLine("\n╔════════════════════════════════════════════════════╗");
@@ -246,12 +347,174 @@ namespace ElectroTrack
             }
         }
 
-        // Menu principal 
+
+
+        //MANTENIMIENTO EVOLUTIVOO: calculadora de escaños!! (opcion 6? creo)
+
+        static void CalculadoraDHont()
+        {
+            LOGGER.info("el usuario accedio a la calculadora d'hondt");
+            RegistrarConsulta("Calculadora D'hondt");
+
+            Console.WriteLine("\n----------------------------calculadora d'hondt interactiva----------------------------");
+
+            Console.WriteLine("\nCuantos partidos quieres incluir? -- Min 2 Maximo 10");
+            int numPartidos = entradausuarionum("Numero de partidos: ");
+
+            if (numPartidos < 2 || numPartidos > 10)
+            {
+                mostrarerror("numero de partidos fuera del rango minimo 2 maximo 10.  -- SE USARA 2");
+                LOGGER.Error($"NUMERO DE PARTIDOS FUERA DE RANGO EN LA CALCULADORA: {numPartidos}");
+                numPartidos = 2;
+
+            }
+
+            string[] nombres = new string[numPartidos];
+            int[] votos = new int[numPartidos];
+
+            for (int i = 0; i < numPartidos; i++)
+            {
+                Console.WriteLine($"\n Partido {i + 1}:");
+                Console.Write("     Nombre: ");
+                // por si acaso: null-safety ya q el console.readline puede dar null
+                string nombreLeido = Console.ReadLine() ?? $"Partido {i + 1}";
+                nombres[i] = string.IsNullOrWhiteSpace(nombreLeido) ? $"Partido {i + 1}" : nombreLeido;
+
+                try
+                {
+                    votos[i] = entradausuarionum("  Votos obtenidos");
+
+                    if (votos[i] < 0)
+                    {
+                        mostrarerror("numero de votos no puede ser negativo.  -- SE USARA 0");
+                        LOGGER.Error($"votos negativos para '{nombres[i]}' : {votos[i]}. Se establece a 0");
+                        votos[i] = 0;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    LOGGER.Error($"error al leer votos del partido '{nombres[i]}' : {ex.Message}");
+                    votos[i] = 0;
+                }
+            }
+
+            int totala = entradausuarionum("\n cuantos escaños se reparten?");
+            if (totala < 1)
+            {
+                LOGGER.Error($"Numero de escanos invalido: {totala}. Se establece a 1.");
+                mostrarerror("El numero de escanos debe ser al menos 1. Se establece a 1.");
+                totala = 1;
+            }
+
+            Console.Write("¿Umbral minimo de votos para optar a escano? (en %, normalmente 3): ");
+            double umbral = 3.0;
+            try
+            {
+                // por si acasoo porque readline puede dar nukll
+                string umbralStr = Console.ReadLine() ?? "3";
+                if (!double.TryParse(umbralStr.Replace(',', '.'),
+                        System.Globalization.NumberStyles.Any,
+                        System.Globalization.CultureInfo.InvariantCulture,
+                        out umbral))
+                {
+                    LOGGER.Error($"Umbral no valido introducido: '{umbralStr}'. Se usara 3%.");
+                    mostrarerror("Valor de umbral no valido. Se usara el 3% por defecto.");
+                    umbral = 3.0;
+                }
+            }
+            catch (Exception ex)
+            {
+                LOGGER.Error($"ERROR al leer el umbral: {ex.Message}");
+                umbral = 3.0;
+            }
+
+            // CALC total votos
+            int totalVotos = 0;
+            for (int i = 0; i < numPartidos; i++)
+                totalVotos += votos[i];
+
+            if (totalVotos == 0)
+            {
+                LOGGER.Error("Total de votos es 0. No se puede calcular el reparto.");
+                mostrarerror("El total de votos es 0. No es posible calcular el reparto.");
+                return;
+            }
+            // calcular cocientes D'Hondt filtrando por umbral
+            double[] cocientes = new double[numPartidos * totala];
+            int[] partidoZZ = new int[numPartidos * totala];
+            int pos = 0;
+
+            for (int i = 0; i < numPartidos; i++)
+            {
+                double porcentaje = (double)votos[i] / totalVotos * 100.0;
+                if (porcentaje < umbral)
+                    continue; // excluido por no superar el umbral
+
+                for (int d = 1; d <= totala; d++)
+                {
+                    cocientes[pos] = (double)votos[i] / d;
+                    partidoZZ[pos] = i;
+                    pos++;
+                }
+            }
+
+            if (pos == 0)
+            {
+                LOGGER.Error("ningun partido supera el umbral minimo");
+                mostrarerror("ningun partido supera el umbral minimo // no se puede repartir ningun escaño");
+                return;
+            }
+
+            //ordenar de menor a mayor 
+            for (int i = 0; i < pos - 1; i++)
+            {
+                for (int j = i + 1; j < pos; j++)
+                {
+                    if (cocientes[j] > cocientes[i])
+                    {
+                        double tmpC = cocientes[i]; cocientes[i] = cocientes[j]; cocientes[j] = tmpC;
+                        int tmpP = partidoZZ[i]; partidoZZ[i] = partidoZZ[j]; partidoZZ[j] = tmpP;
+                    }
+                }
+            }
+
+            // ASIGNAR escañoss
+            int[] escañosPartido = new int[numPartidos];
+            int escañosasignados = Math.Min(totala, pos);
+
+            for (int i = 0; i < escañosasignados; i++)
+            {
+                escañosPartido[partidoZZ[i]]++;
+                //porfavor dioses del c# q funcione
+            }
+            //resulktados
+            Console.WriteLine(" ----------- resultado----------- ");
+            Console.WriteLine($"\n total votos: {totalVotos}");
+            Console.WriteLine($"escaños q se juegan: {totala}");
+            Console.WriteLine($"  Umbral aplicado: {umbral}%\n");
+
+                     for (int i = 0; i < numPartidos; i++)
+            {
+                double calculiño = (double)votos[i] / totalVotos * 100.0;
+                bool excluido = calculiño < umbral;
+ 
+                if (excluido)
+                    Console.WriteLine($"  x {nombres[i]} - {votos[i]} votos ({calculiño:F2}%) -> EXCLUIDO (no supera el {umbral}%)");
+                else
+                    Console.WriteLine($"  * {nombres[i]} - {votos[i]} votos ({calculiño:F2}%) -> {escañosPartido[i]} escaño/escaños");
+            }
+ 
+            LOGGER.info($"Calculadora: {numPartidos} partidos, {totala} escaños, umbral {umbral}%.");
+        }
+ 
+        
+
+        // Menu principal
 
         static void menuprincipal()
         {
             Console.WriteLine("╔════════════════════════════════════════════════════╗");
-            Console.WriteLine("║  Bienvenido a ElectroTrack version 67.trojano.exe║");
+            Console.WriteLine("║  Bienvenido a ElectroTrack version nomepagan.trojano.exe║");
             Console.WriteLine("╚════════════════════════════════════════════════════╝");
             Console.WriteLine(" si presiona algun numero de los disponibles, podra acceder a la información deseada.");
             Console.WriteLine("1. ¿Cómo funciona la Ley D'Hondt? y como funciona el sistema electoral");
@@ -259,7 +522,8 @@ namespace ElectroTrack
             Console.WriteLine("3. Elecciones pasadas y resultados");
             Console.WriteLine("4. Casos de corrupción destacados");
             Console.WriteLine("5. Ver historial de consultas");
-            Console.WriteLine("6. Salir");
+            Console.WriteLine("6. Calculadora D'Hondt interactiva  [NUEVO]");
+            Console.WriteLine("7. Salir");
         }
 
         static void continuallalala()
@@ -269,14 +533,15 @@ namespace ElectroTrack
             Console.Clear();
         }
 
-        // formato de registros
+        // formato de registros como su nombre indica registra la consulta
 
         static void RegistrarConsulta(string tema)
         {
             List<string> consulta = new List<string>
             {
                 tema,
-                DateTime.Now.ToString("yyyy-dd-MM")
+                // CORRECCIÓN LÓGICA: formato de fecha corregido (era "yyyy-dd-MM", día y mes estaban invertidos)
+                DateTime.Now.ToString("yyyy-MM-dd")
             };
             consultasRealizadas.Add(consulta);
         }
@@ -288,6 +553,8 @@ namespace ElectroTrack
 
             while (!valido)
             {
+
+                // recordatiorio hacer algo para q no devuelva null
                 Console.Write(mensaje);
                 string entrada = Console.ReadLine();
 
@@ -296,9 +563,15 @@ namespace ElectroTrack
                     numero = Convert.ToInt32(entrada);
                     valido = true;
                 }
-                catch
+                catch (FormatException ex)
                 {
+                    LOGGER.Error($" entrada no numerica recuibida: '{entrada}' - {ex.Message}");
                     mostrarerror("entrada invalida, SELECCIONA UN NUMERO DE LOS QUE PONE NO EL QUE TU QUIERAS o si no te borro el system 32 :).");
+                }
+                  catch (OverflowException ex)
+                {
+                    LOGGER.Error($"Numero demasiado grande: '{entrada}' — {ex.Message}");
+                    mostrarerror("El numero introducido es demasiado grande.");
                 }
             }
 
